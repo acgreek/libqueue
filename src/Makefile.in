@@ -120,12 +120,15 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqueue_la_LIBADD =
-am_libqueue_la_OBJECTS = queue.lo
+am_libqueue_la_OBJECTS = libqueue_la-queue.lo
 libqueue_la_OBJECTS = $(am_libqueue_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+libqueue_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libqueue_la_CFLAGS) \
+	$(CFLAGS) $(libqueue_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -226,6 +229,8 @@ LIBKYOTOCABINET_LIBS = @LIBKYOTOCABINET_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
+LIBXDGBASEDIR_CFLAGS = @LIBXDGBASEDIR_CFLAGS@
+LIBXDGBASEDIR_LIBS = @LIBXDGBASEDIR_LIBS@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
@@ -309,6 +314,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libqueue.la
 libqueue_la_SOURCES = queue.c
+libqueue_la_CFLAGS = $(LIBKYOTOCABINET_CFLAGS) $(LIBXDGBASEDIR_CFLAGS)
+libqueue_la_LDFLAGS = $(LIBKYOTOCABINET_LIBS) $(LIBXDGBASEDIR_LIBS)
 include_HEADERS = queue.h
 all: all-am
 
@@ -381,7 +388,7 @@ clean-libLTLIBRARIES:
 	}
 
 libqueue.la: $(libqueue_la_OBJECTS) $(libqueue_la_DEPENDENCIES) $(EXTRA_libqueue_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libqueue_la_OBJECTS) $(libqueue_la_LIBADD) $(LIBS)
+	$(AM_V_CCLD)$(libqueue_la_LINK) -rpath $(libdir) $(libqueue_la_OBJECTS) $(libqueue_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -389,7 +396,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/queue.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqueue_la-queue.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -411,6 +418,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+libqueue_la-queue.lo: queue.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqueue_la_CFLAGS) $(CFLAGS) -MT libqueue_la-queue.lo -MD -MP -MF $(DEPDIR)/libqueue_la-queue.Tpo -c -o libqueue_la-queue.lo `test -f 'queue.c' || echo '$(srcdir)/'`queue.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqueue_la-queue.Tpo $(DEPDIR)/libqueue_la-queue.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='queue.c' object='libqueue_la-queue.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqueue_la_CFLAGS) $(CFLAGS) -c -o libqueue_la-queue.lo `test -f 'queue.c' || echo '$(srcdir)/'`queue.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

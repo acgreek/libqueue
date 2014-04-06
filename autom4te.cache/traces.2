@@ -2746,13 +2746,21 @@ m4trace:configure.ac:9: -1- PKG_CHECK_EXISTS([kyotocabinet], [pkg_cv_[]LIBKYOTOC
 m4trace:configure.ac:9: -1- PKG_CHECK_EXISTS([kyotocabinet], [pkg_cv_[]LIBKYOTOCABINET_LIBS=`$PKG_CONFIG --[]libs "kyotocabinet" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
 m4trace:configure.ac:9: -1- _PKG_SHORT_ERRORS_SUPPORTED
-m4trace:configure.ac:10: -1- m4_pattern_allow([^LIB@&t@OBJS$])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^LTLIBOBJS$])
-m4trace:configure.ac:10: -1- AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^am__EXEEXT_TRUE$])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^am__EXEEXT_FALSE$])
-m4trace:configure.ac:10: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_TRUE])
-m4trace:configure.ac:10: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_FALSE])
-m4trace:configure.ac:10: -1- _AC_AM_CONFIG_HEADER_HOOK(["$ac_file"])
-m4trace:configure.ac:10: -1- _AM_OUTPUT_DEPENDENCY_COMMANDS
-m4trace:configure.ac:10: -1- _LT_PROG_LTMAIN
+m4trace:configure.ac:10: -1- PKG_CHECK_MODULES([LIBXDGBASEDIR], [libxdg-basedir])
+m4trace:configure.ac:10: -1- m4_pattern_allow([^LIBXDGBASEDIR_CFLAGS$])
+m4trace:configure.ac:10: -1- m4_pattern_allow([^LIBXDGBASEDIR_LIBS$])
+m4trace:configure.ac:10: -1- PKG_CHECK_EXISTS([libxdg-basedir], [pkg_cv_[]LIBXDGBASEDIR_CFLAGS=`$PKG_CONFIG --[]cflags "libxdg-basedir" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
+m4trace:configure.ac:10: -1- PKG_CHECK_EXISTS([libxdg-basedir], [pkg_cv_[]LIBXDGBASEDIR_LIBS=`$PKG_CONFIG --[]libs "libxdg-basedir" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
+m4trace:configure.ac:10: -1- _PKG_SHORT_ERRORS_SUPPORTED
+m4trace:configure.ac:11: -1- m4_pattern_allow([^LIB@&t@OBJS$])
+m4trace:configure.ac:11: -1- m4_pattern_allow([^LTLIBOBJS$])
+m4trace:configure.ac:11: -1- AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])
+m4trace:configure.ac:11: -1- m4_pattern_allow([^am__EXEEXT_TRUE$])
+m4trace:configure.ac:11: -1- m4_pattern_allow([^am__EXEEXT_FALSE$])
+m4trace:configure.ac:11: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_TRUE])
+m4trace:configure.ac:11: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_FALSE])
+m4trace:configure.ac:11: -1- _AC_AM_CONFIG_HEADER_HOOK(["$ac_file"])
+m4trace:configure.ac:11: -1- _AM_OUTPUT_DEPENDENCY_COMMANDS
+m4trace:configure.ac:11: -1- _LT_PROG_LTMAIN
