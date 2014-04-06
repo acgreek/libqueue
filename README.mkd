@@ -102,3 +102,19 @@ libqueue uses the GNU autotools for building:
 make
 make install
 ```
+
+Usage
+=====
+
+It's very simple: Use
+
+```C
+#include <queue.h>
+```
+
+in your C program and link it with
+
+```sh
+-lqueue
+```
+given that libqueue was installed into the default linker search path.
