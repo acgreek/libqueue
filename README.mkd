@@ -140,3 +140,28 @@ Pops the strings from the queue that were pushed using
 <code>qpush</code>, on element per call to qpush. If there is no element
 to pop, exits with the status code 1. If the pop was successfu, it
 prints the string to stdout and exists with the status code 0.
+
+qlen
+----
+
+Prints the length of the queueutils' queue.
+
+qpeek
+-----
+
+Peek at elements in the queueutils' queue.
+```sh
+qpeek <index0> [<index1>[..<indexN>]]
+```
+Tries to peek at all indizes listed as arguments. Skips over invalid
+indizes but fails if the queue cannot be accessed properly.
+
+qpoke
+-----
+
+Replace an existing in the queue with another one.
+```sh
+qpoke <INDEX> <NEW VALUE>
+```
+Fails if we cannot poke the element at the specified index, or if the
+index is out of bounds.
