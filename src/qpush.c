@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <libgen.h>
+#include <getopt.h>
 #include <queue.h>
 #include "queueutils.h"
 
@@ -8,7 +9,23 @@ int main(int argc, char **argv) {
   struct Queue q;
   struct QueueData d;
   int i = 0;
-  if(queue_open(&q, QUEUEUTILS_QUEUE) != LIBQUEUE_SUCCESS) {
+  char *cq = NULL;
+  int opt = 0;
+
+  while((opt = getopt(argc, argv, "hq:")) != -1)
+    switch(opt) {
+      case 'q':
+        cq = strdup(optarg);
+        break;
+      default:
+      case 'h':
+        puts("Usage: qpush [-h] [-q queue-name] [--] <args>");
+        return EXIT_FAILURE;
+    }
+
+  i = optind-1;
+
+  if(queue_open(&q, SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;
   }
@@ -22,5 +39,7 @@ int main(int argc, char **argv) {
   }
   if(queue_close(&q) != LIBQUEUE_SUCCESS)
     puts("Failed to close the queue");
-  return 0;
+  if(cq != NULL)
+    free(cq);
+  return EXIT_SUCCESS;
 }

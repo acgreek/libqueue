@@ -8,8 +8,21 @@ int main(int argc, char **argv) {
   struct Queue q;
   struct QueueData d;
   int64_t l = 0;
+  int opt = 0;
+  char *cq = NULL;
 
-  if(queue_open(&q, "queueutils-stack0") != LIBQUEUE_SUCCESS) {
+  while((opt = getopt(argc, argv, "hq:")) != -1)
+    switch(opt){
+      case 'q':
+        cq = strdup(optarg);
+        break;
+      default:
+      case 'h':
+        puts("Usage: qpop [-h] [-q queue-name]");
+        return EXIT_FAILURE;
+    }
+
+  if(queue_open(&q, SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;
   }
@@ -29,5 +42,7 @@ int main(int argc, char **argv) {
   }
   printf("%s\n", (const char*)d.v);
   free(d.v);
+  if(cq != NULL)
+    free(cq);
   return closequeue(&q);
 }

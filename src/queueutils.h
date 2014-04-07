@@ -3,8 +3,10 @@
 
 #include <queue.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define QUEUEUTILS_QUEUE ("queueutils-stack0")
+#define SELECTQUEUE(pvar) ((pvar)!=NULL?(pvar):(QUEUEUTILS_QUEUE))
 
 int closequeue(struct Queue *q);
 
