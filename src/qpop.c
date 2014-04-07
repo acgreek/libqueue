@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
   printf("%s\n", (const char*)d.v);
+  free(d.v);
   closequeue(&q);
   return EXIT_SUCCESS;
 }
