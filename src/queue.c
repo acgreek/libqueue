@@ -158,7 +158,7 @@ int queue_poke(struct Queue *q, int64_t idx, struct QueueData *d) {
   int64_t i = idx + 1;
   if(i > kcdbcount(q->db))
     return LIBQUEUE_FAILURE;
-  if(!kcdbset(q->db, (const char*)(&i), sizeof(int64_t),
+  if(!kcdbreplace(q->db, (const char*)(&i), sizeof(int64_t),
         d->v, d->vlen))
     return LIBQUEUE_FAILURE;
   return LIBQUEUE_SUCCESS;
