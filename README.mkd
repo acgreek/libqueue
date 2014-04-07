@@ -118,3 +118,25 @@ in your C program and link it with
 -lqueue
 ```
 given that libqueue was installed into the default linker search path.
+
+queueutils
+==========
+
+The library comes with a number of reference/test/practical utilities
+that all operate on the queue named 'queueutils-stack0' to be used on
+the command line:
+
+qpush
+-----
+
+Pushes all its arguments in onto the queue
+</code>queueutils-stack0</code>. Exits with an error code of 0 if the
+push was successful and 1 if it wasn't.
+
+qpop
+----
+
+Pops the strings from the queue that were pushed using
+<code>qpush</code>, on element per call to qpush. If there is no element
+to pop, exits with the status code 1. If the pop was successfu, it
+prints the string to stdout and exists with the status code 0.
