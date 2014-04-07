@@ -2,12 +2,13 @@
 #include <string.h>
 #include <libgen.h>
 #include <queue.h>
+#include "queueutils.h"
 
 int main(int argc, char **argv) {
   struct Queue q;
   struct QueueData d;
   int i = 0;
-  if(queue_open(&q, "queueutils-stack0") != LIBQUEUE_SUCCESS) {
+  if(queue_open(&q, QUEUEUTILS_QUEUE) != LIBQUEUE_SUCCESS) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;
   }

@@ -80,7 +80,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = qpush$(EXEEXT) qpop$(EXEEXT)
+bin_PROGRAMS = qpush$(EXEEXT) qpop$(EXEEXT) qlen$(EXEEXT) \
+	qpeek$(EXEEXT) qpoke$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp $(include_HEADERS)
@@ -133,13 +134,31 @@ libqueue_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libqueue_la_CFLAGS) \
 	$(CFLAGS) $(libqueue_la_LDFLAGS) $(LDFLAGS) -o $@
 PROGRAMS = $(bin_PROGRAMS)
-am_qpop_OBJECTS = qpop.$(OBJEXT)
+am_qlen_OBJECTS = qlen.$(OBJEXT) queueutils.$(OBJEXT)
+qlen_OBJECTS = $(am_qlen_OBJECTS)
+qlen_LDADD = $(LDADD)
+qlen_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(qlen_LDFLAGS) $(LDFLAGS) -o $@
+am_qpeek_OBJECTS = qpeek.$(OBJEXT) queueutils.$(OBJEXT)
+qpeek_OBJECTS = $(am_qpeek_OBJECTS)
+qpeek_LDADD = $(LDADD)
+qpeek_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(qpeek_LDFLAGS) $(LDFLAGS) -o $@
+am_qpoke_OBJECTS = qpoke.$(OBJEXT) queueutils.$(OBJEXT)
+qpoke_OBJECTS = $(am_qpoke_OBJECTS)
+qpoke_LDADD = $(LDADD)
+qpoke_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(qpoke_LDFLAGS) $(LDFLAGS) -o $@
+am_qpop_OBJECTS = qpop.$(OBJEXT) queueutils.$(OBJEXT)
 qpop_OBJECTS = $(am_qpop_OBJECTS)
 qpop_LDADD = $(LDADD)
 qpop_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(qpop_LDFLAGS) $(LDFLAGS) -o $@
-am_qpush_OBJECTS = qpush.$(OBJEXT)
+am_qpush_OBJECTS = qpush.$(OBJEXT) queueutils.$(OBJEXT)
 qpush_OBJECTS = $(am_qpush_OBJECTS)
 qpush_LDADD = $(LDADD)
 qpush_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -179,8 +198,10 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libqueue_la_SOURCES) $(qpop_SOURCES) $(qpush_SOURCES)
-DIST_SOURCES = $(libqueue_la_SOURCES) $(qpop_SOURCES) $(qpush_SOURCES)
+SOURCES = $(libqueue_la_SOURCES) $(qlen_SOURCES) $(qpeek_SOURCES) \
+	$(qpoke_SOURCES) $(qpop_SOURCES) $(qpush_SOURCES)
+DIST_SOURCES = $(libqueue_la_SOURCES) $(qlen_SOURCES) $(qpeek_SOURCES) \
+	$(qpoke_SOURCES) $(qpop_SOURCES) $(qpush_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -333,10 +354,16 @@ libqueue_la_SOURCES = queue.c
 libqueue_la_CFLAGS = $(LIBKYOTOCABINET_CFLAGS) $(LIBXDGBASEDIR_CFLAGS)
 libqueue_la_LDFLAGS = $(LIBKYOTOCABINET_LIBS) $(LIBXDGBASEDIR_LIBS)
 include_HEADERS = queue.h
-qpush_SOURCES = qpush.c
+qpush_SOURCES = qpush.c queueutils.c queueutils.h
 qpush_LDFLAGS = -lqueue
-qpop_SOURCES = qpop.c
+qpop_SOURCES = qpop.c queueutils.c queueutils.h
 qpop_LDFLAGS = -lqueue
+qlen_SOURCES = qlen.c queueutils.c queueutils.h
+qlen_LDFLAGS = -lqueue
+qpeek_SOURCES = qpeek.c queueutils.c queueutils.h
+qpeek_LDFLAGS = -lqueue
+qpoke_SOURCES = qpoke.c queueutils.c queueutils.h
+qpoke_LDFLAGS = -lqueue
 all: all-am
 
 .SUFFIXES:
@@ -459,6 +486,18 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+qlen$(EXEEXT): $(qlen_OBJECTS) $(qlen_DEPENDENCIES) $(EXTRA_qlen_DEPENDENCIES) 
+	@rm -f qlen$(EXEEXT)
+	$(AM_V_CCLD)$(qlen_LINK) $(qlen_OBJECTS) $(qlen_LDADD) $(LIBS)
+
+qpeek$(EXEEXT): $(qpeek_OBJECTS) $(qpeek_DEPENDENCIES) $(EXTRA_qpeek_DEPENDENCIES) 
+	@rm -f qpeek$(EXEEXT)
+	$(AM_V_CCLD)$(qpeek_LINK) $(qpeek_OBJECTS) $(qpeek_LDADD) $(LIBS)
+
+qpoke$(EXEEXT): $(qpoke_OBJECTS) $(qpoke_DEPENDENCIES) $(EXTRA_qpoke_DEPENDENCIES) 
+	@rm -f qpoke$(EXEEXT)
+	$(AM_V_CCLD)$(qpoke_LINK) $(qpoke_OBJECTS) $(qpoke_LDADD) $(LIBS)
+
 qpop$(EXEEXT): $(qpop_OBJECTS) $(qpop_DEPENDENCIES) $(EXTRA_qpop_DEPENDENCIES) 
 	@rm -f qpop$(EXEEXT)
 	$(AM_V_CCLD)$(qpop_LINK) $(qpop_OBJECTS) $(qpop_LDADD) $(LIBS)
@@ -474,8 +513,12 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqueue_la-queue.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qlen.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qpeek.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qpoke.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qpop.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qpush.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/queueutils.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

@@ -2,10 +2,7 @@
 #include <stdlib.h>
 #include <queue.h>
 
-inline void closequeue(struct Queue *q) {
-  if(queue_close(q) != LIBQUEUE_SUCCESS)
-    puts("Failed to close the queue");
-}
+#include "queueutils.h"
 
 int main(int argc, char **argv) {
   struct Queue q;
@@ -32,6 +29,5 @@ int main(int argc, char **argv) {
   }
   printf("%s\n", (const char*)d.v);
   free(d.v);
-  closequeue(&q);
-  return EXIT_SUCCESS;
+  return closequeue(&q);
 }
