@@ -21,8 +21,15 @@ API Overview
 ============
 
 ```C
+/*
+  Intransparent data type. Nothing to see here...
+*/
 struct Queue;
 
+/*
+  Data structure used to store data in, and retrieve data from the
+  queue
+*/
 struct QueueData {
   void *v;
   size_t vlen;
