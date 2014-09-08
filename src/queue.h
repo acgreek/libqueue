@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 #define QUEUE_DATADIR ("libqueue")
-#define QUEUE_TUNINGSUFFIX "#type=kct#zcomp=gz#opts=cs"
+#define QUEUE_TUNINGSUFFIX "#type=kct#zcomp=gz#opts=c"
 
 enum {
   LIBQUEUE_FAILURE = -1,

@@ -34,13 +34,8 @@ int queue_open(struct Queue *q, const char *id) {
   if(!xdgInitHandle(&xh))
     return LIBQUEUE_FAILURE;
   ddir = xdgDataHome(&xh);
-  dbfpathlen = sizeof(char)*(strlen(ddir) +
-      1 + // '/'
-      strlen(QUEUE_DATADIR) +
-      1 + // '/'
-      strlen(id) +
-      strlen(QUEUE_TUNINGSUFFIX) + 
-      2);
+  dbfpathlen = snprintf(NULL, 0, "%s/%s/%s%s",
+      ddir, QUEUE_DATADIR, id, QUEUE_TUNINGSUFFIX);
   dbfpath = malloc(dbfpathlen);
   if(dbfpath==NULL) {
     xdgWipeHandle(&xh);

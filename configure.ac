@@ -1,4 +1,4 @@
-AC_INIT([libqueue], [0.10], [dev@2ion.de])
+AC_INIT([libqueue], [0.11], [dev@2ion.de])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AM_PROG_AR
 LT_INIT
