@@ -172,3 +172,13 @@ qpoke <INDEX> <NEW VALUE>
 ```
 Fails if we cannot poke the element at the specified index, or if the
 index is out of bounds.
+
+License
+=======
+
+This program is licensed under the GNU Lesser General Public License v3
+or later. Note that the LGPL is a set of additional terms that apply on
+top of the GPL. The text of the GPL3 is provided in LICENSE.GPL3, the
+text of the LGPL in LICENSE.LGPL3.
+
+
