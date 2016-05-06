@@ -21,7 +21,7 @@
 #include <string.h>
 #include <libgen.h>
 #include <getopt.h>
-#include <queue.h>
+#include "queue.h"
 #include <signal.h>
 #include "queueutils.h"
 
