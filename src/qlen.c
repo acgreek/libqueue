@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-  if(queue_open(&q, SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
+  if(queue_open(SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;
   }
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     closequeue(&q);
     return EXIT_FAILURE;
   }
-  printf("%d\n", l);
+  printf("%lld\n", (long long)l);
   if(cq != NULL)
     free(cq);
   return closequeue(&q);

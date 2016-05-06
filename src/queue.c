@@ -18,131 +18,105 @@
  * */
 
 #include "queue.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-int queue_open(struct Queue *q, const char *id) {
-  assert(q != NULL);
-  assert(id != NULL);
+static int  updateStateOnDisk(struct Queue * q) {
+    lseek(q->stateFd, 0, SEEK_SET);
+    if (sizeof (struct QueueStateFileStruct) != write (q->stateFd,&q->state,sizeof (struct QueueStateFileStruct)  ))
+       return -1;
+    fdatasync(q->stateFd);
+    return 0;
+}
 
-  xdgHandle xh;
-  const char *ddir = NULL;
-  char *dbfpath = NULL;
-  char *qpath = NULL;
-  size_t qpathlen = 0;
-  size_t dbfpathlen = 0;
-
-  /* locate database file */
-  if(!xdgInitHandle(&xh))
-    return LIBQUEUE_FAILURE;
-  ddir = xdgDataHome(&xh);
-  dbfpathlen = snprintf(NULL, 0, "%s/%s/%s%s",
-      ddir, QUEUE_DATADIR, id, QUEUE_TUNINGSUFFIX);
-  dbfpath = malloc(dbfpathlen);
-  if(dbfpath==NULL) {
-    xdgWipeHandle(&xh);
-    return LIBQUEUE_MEM_ERROR;
-  }
-  snprintf(dbfpath, dbfpathlen, "%s/%s/%s%s",
-      ddir, QUEUE_DATADIR, id, QUEUE_TUNINGSUFFIX);
-
-  /* create config directory if necessary */
-  qpathlen = sizeof(char)*(strlen(ddir)+2+strlen(QUEUE_DATADIR));
-  qpath=malloc(qpathlen);
-  if(qpath==NULL) {
-    xdgWipeHandle(&xh);
-    return LIBQUEUE_MEM_ERROR;
-  }
-  snprintf(qpath, qpathlen, "%s/%s", ddir, QUEUE_DATADIR);
-  if(access((const char*)qpath, F_OK) != 0
-      && xdgMakePath(qpath, S_IRWXU) != 0) {
-      xdgWipeHandle(&xh);
-      return LIBQUEUE_FAILURE;
-  }
-
-  /* open the database */
-  q->db = kcdbnew();
-  if(!kcdbopen(q->db, dbfpath, KCOWRITER | KCOCREATE))
-    return LIBQUEUE_FAILURE;
-  q->cur = kcdbcursor(q->db);
-
-  /* free memory we've used */
-  free(dbfpath);
-  xdgWipeHandle(&xh);
-
-  return LIBQUEUE_SUCCESS;
+struct Queue * queue_open(const char *path) {
+    assert(path != NULL);
+    if (0 != access (path, R_OK| W_OK))
+        return NULL;
+    struct Queue * q = malloc (sizeof (struct Queue));
+    if (NULL == q)
+        return NULL;
+    memset (q, 0 , sizeof (struct Queue));
+    q->path = strdup (path);
+    char statefilepath[2048];
+    snprintf(statefilepath, sizeof(statefilepath),"%s/queue.state", q->path);
+    q->stateFd = open (statefilepath,O_CREAT| O_RDWR, S_IRUSR| S_IWUSR );
+    if (q->stateFd == -1) {
+        free(q);
+        return NULL;
+    }
+    if (sizeof (struct QueueStateFileStruct) != read(q->stateFd, &q->state,sizeof (struct QueueStateFileStruct) ) ) {
+        memset (&q->state, 0 , sizeof (struct QueueStateFileStruct));
+        updateStateOnDisk(q);
+    }
+    if ('\0' != q->state.writeFile[0]) {
+        snprintf(statefilepath, sizeof(statefilepath),"%s/%s", q->path, q->state.writeFile);
+        q->writeFd = open (statefilepath,O_CREAT| O_RDWR, S_IRUSR| S_IWUSR );
+        lseek(q->writeFd,q->state.writeOffset , SEEK_CUR);
+    }
+    return q;
 }
 
 int queue_close(struct Queue *q) {
   assert(q != NULL);
-  kccurdel(q->cur);
-  if(!kcdbclose(q->db))
-    return LIBQUEUE_FAILURE;
+  if (q->stateFd)
+      close(q->stateFd);
+  if (q->writeFd)
+      close(q->writeFd);
+  if (q->path)
+      free(q->path);
+  free(q);
   return LIBQUEUE_SUCCESS;
 }
 
 int queue_push(struct Queue *q, struct QueueData *d) {
-  assert(q != NULL);
-  assert(d != NULL);
-  assert(d->v != NULL);
-  int64_t ni = kcdbcount(q->db);
-  if(!kcdbadd(q->db,
-        (const char*)(&ni),
-        sizeof(int64_t), 
-        (const char*)d->v,
-        d->vlen))
-    return LIBQUEUE_FAILURE;
-  else
+    assert(q != NULL);
+    assert(d != NULL);
+    assert(d->v != NULL);
+    //  return LIBQUEUE_FAILURE;
+    if ('\0' == q->state.writeFile[0]) {
+        if (q->writeFd)
+            close(q->writeFd);
+        snprintf(q->state.writeFile, sizeof(q->state.writeFile)-1, "queue.%zu", time(NULL));
+        char statefilepath[2048];
+        snprintf(statefilepath, sizeof(statefilepath),"%s/%s", q->path, q->state.writeFile);
+        q->writeFd = open (statefilepath,O_CREAT| O_RDWR, S_IRUSR| S_IWUSR );
+        if (q->writeFd == 0)
+            return LIBQUEUE_FAILURE;
+    }
+
+    size_t cur = lseek(q->writeFd,0, SEEK_CUR);
+
+    if (sizeof(u_int64_t) != write (q->writeFd, &d->vlen, sizeof(u_int64_t))) {
+        lseek(q->writeFd, cur, SEEK_SET);
+        return LIBQUEUE_FAILURE;
+    }
+    if (d->vlen != write (q->writeFd, d->v, d->vlen)) {
+        lseek(q->writeFd, cur, SEEK_SET);
+        return LIBQUEUE_FAILURE;
+    }
+    fdatasync(q->writeFd);
+    cur = lseek(q->writeFd,0, SEEK_CUR);
+    q->state.writeOffset = cur;
+    updateStateOnDisk(q);
     return LIBQUEUE_SUCCESS;
 }
 
 int queue_pop(struct Queue *q, struct QueueData *d) {
   assert(q != NULL);
   assert(d != NULL);
-  char *vbuf = NULL;
-  size_t vbuflen = 0;
-  int64_t i = kcdbcount(q->db)-1;
-  if((vbuf = kcdbseize(q->db,
-          (const char*)(&i),
-          sizeof(int64_t),
-          &vbuflen)) == NULL)
-    return LIBQUEUE_FAILURE;
-  d->v = malloc(vbuflen);
-  if(d->v==NULL) {
-    kcfree(vbuf);
-    return LIBQUEUE_MEM_ERROR;
-  }
-  memcpy(d->v, vbuf, vbuflen);
-  d->vlen = vbuflen;
-  kcfree(vbuf);
   return LIBQUEUE_SUCCESS;
 }
 
 int queue_len(struct Queue *q, int64_t *lenbuf) {
   assert(lenbuf != NULL);
-  *lenbuf = kcdbcount(q->db);
   return LIBQUEUE_SUCCESS;
 }
 
 int queue_peek(struct Queue *q, int64_t idx, struct QueueData *d) {
   assert(q != NULL);
   assert(d != NULL);
-  char *vbuf = NULL;
-  size_t vbuflen = 0;
-  int64_t i = idx + 1;
-  if(i > kcdbcount(q->db))
-    return LIBQUEUE_FAILURE;
-  if((vbuf = kcdbget(q->db,
-          (const char*)(&i),
-          sizeof(int64_t),
-          &vbuflen)) == NULL)
-    return LIBQUEUE_FAILURE;
-  d->v = malloc(vbuflen);
-  if(d->v==NULL) {
-    kcfree(vbuf);
-    return LIBQUEUE_MEM_ERROR;
-  }
-  memcpy(d->v, vbuf, vbuflen);
-  d->vlen = vbuflen;
-  kcfree(vbuf);
   return LIBQUEUE_SUCCESS;
 }
 
@@ -150,11 +124,5 @@ int queue_poke(struct Queue *q, int64_t idx, struct QueueData *d) {
   assert(q != NULL);
   assert(d != NULL);
   assert(d->v != NULL);
-  int64_t i = idx + 1;
-  if(i > kcdbcount(q->db))
-    return LIBQUEUE_FAILURE;
-  if(!kcdbreplace(q->db, (const char*)(&i), sizeof(int64_t),
-        d->v, d->vlen))
-    return LIBQUEUE_FAILURE;
   return LIBQUEUE_SUCCESS;
 }

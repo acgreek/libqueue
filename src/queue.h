@@ -26,8 +26,6 @@
 #include <stdlib.h>
 #include <error.h>
 #include <errno.h>
-#include <kclangc.h>
-#include <basedir.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -42,17 +40,29 @@ enum {
   LIBQUEUE_MEM_ERROR = -2
 };
 
+struct QueueStateFileStruct {
+    u_int64_t totalDiskUsage;
+    u_int64_t readableDiskUsage;
+    u_int64_t maxFileSize;
+    char writeFile[1024];
+    u_int64_t writeOffset;
+    char readFile[1024];
+    u_int64_t readOffset;
+};
+
 struct Queue {
-  KCDB *db;
-  KCCUR *cur;
+    char * path;
+    int stateFd;
+    int writeFd;
+    int readFd;
+    struct QueueStateFileStruct state;
 };
 
 struct QueueData {
   void *v;
-  size_t vlen;
+  u_int64_t vlen ;
 };
-
-int queue_open(struct Queue *q, const char *id);
+struct Queue * queue_open(const char * path);
 int queue_push(struct Queue *q, struct QueueData *d);
 int queue_pop(struct Queue *q, struct QueueData *d);
 int queue_len(struct Queue *q, int64_t *len);

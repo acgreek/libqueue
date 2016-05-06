@@ -27,7 +27,7 @@
 
 /* global so that we can close the database properly in case of an
  * interrupt while reading from stdin */
-struct Queue q;
+struct Queue *q;
 
 static inline void push_buf(struct Queue *q,
     struct QueueData *d, char*linebuf, size_t*linebuflen) {
@@ -35,9 +35,9 @@ static inline void push_buf(struct Queue *q,
   d->vlen = *linebuflen-(2*sizeof(char));//remove trailing newline
   if(queue_push(q, d) != LIBQUEUE_SUCCESS){
     fputs("Failed to push value onto the queue: ", stdout);
-    puts(linebuf); 
+    puts(linebuf);
   }
-  memset(linebuf, 0, *linebuflen); 
+  memset(linebuf, 0, *linebuflen);
 }
 
 void sighandler(int s) {
@@ -47,7 +47,7 @@ void sighandler(int s) {
 }
 
 void do_at_exit(void) {
-  if(queue_close(&q) != LIBQUEUE_SUCCESS)
+  if(queue_close(q) != LIBQUEUE_SUCCESS)
     puts("Failed to close the queue");
 }
 
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 
   i = optind-1;
 
-  if(queue_open(&q, SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
+  if((q= queue_open(SELECTQUEUE(cq))) == NULL) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;
   }
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
       while(argv[++i]) {
         d.v = argv[i];
         d.vlen = sizeof(char)*(strlen(argv[i])+1);
-        if(queue_push(&q, &d) != LIBQUEUE_SUCCESS) {
+        if(queue_push(q, &d) != LIBQUEUE_SUCCESS) {
           fputs("Failed to push value onto the queue: ", stdout);
           puts(argv[i]);
         }
@@ -108,11 +108,11 @@ int main(int argc, char **argv) {
         default:
         case 0:
           while(getline(&linebuf, &linebuflen, stdin) != -1)
-            push_buf(&q, &d, linebuf, &linebuflen);
+            push_buf(q, &d, linebuf, &linebuflen);
           break; // case 0:use_null
         case 1:
           while(getdelim(&linebuf, &linebuflen, '\0', stdin) != -1)
-            push_buf(&q, &d, linebuf, &linebuflen);
+            push_buf(q, &d, linebuf, &linebuflen);
           break;
       }
       break; // case 1:use_stdin

@@ -4,7 +4,7 @@
 #include "queueutils.h"
 
 int main(int argc, char **argv) {
-  struct Queue q;
+  struct Queue *q;
   struct QueueData d;
   int64_t l = 0;
   int64_t i = 0;
@@ -27,29 +27,29 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  if(queue_open(&q, SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
+  if((q = queue_open(SELECTQUEUE(cq))) != LIBQUEUE_SUCCESS) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;
   }
-  if(queue_len(&q, &l) != LIBQUEUE_SUCCESS) {
+  if(queue_len(q, &l) != LIBQUEUE_SUCCESS) {
     puts("Failed to read the queue length.");
-    closequeue(&q);
+    closequeue(q);
     return EXIT_FAILURE;
   }
   if((i = (int64_t)atoi((const char*)argv[optind])) < 0
       || (i+1)>l) {
     puts("Index value is out of bounds.");
-    closequeue(&q);
+    closequeue(q);
     return EXIT_FAILURE;
   }
   d.v = argv[optind+1];
   d.vlen = sizeof(char)*(strlen(argv[optind+1])+1);
-  if(queue_poke(&q, i-1, &d) != LIBQUEUE_SUCCESS) {
+  if(queue_poke(q, i-1, &d) != LIBQUEUE_SUCCESS) {
     puts("Failed to poke.");
-    closequeue(&q);
+    closequeue(q);
     return EXIT_FAILURE;
   }
   if(cq != NULL)
     free(cq);
-  return closequeue(&q);
+  return closequeue(q);
 }

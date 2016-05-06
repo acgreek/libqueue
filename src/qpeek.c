@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
   i = optind-1;
 
-  if(queue_open(&q, SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
+  if(queue_open( SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;
   }
@@ -56,14 +56,14 @@ int main(int argc, char **argv) {
   while(argv[++i]) {
     if((j = (int64_t)atoi((const char*)argv[i])) < 0
         || (j+1)>l) {
-      printf("Index out of bounds: %d (%d)\n", j, l);
+      printf("Index out of bounds: %lld (%lld)\n", (long long)j, (long long )l);
       continue;
     }
     if(queue_peek(&q, j-1, &d) != LIBQUEUE_SUCCESS) {
-      printf("Failed to peek at element #%d\n", j);
+      printf("Failed to peek at element #%lld\n",(long long) j);
       continue;
     }
-    printf("@%d: %s\n", j, (const char*)d.v);
+    printf("@%lld: %s\n", (long long )j, (const char*)d.v);
     free(d.v);
   }
   if(cq != NULL)
