@@ -36,23 +36,17 @@ struct Queue {
 };
 static void CmpDestroy(void* arg) {  }
 
+static u_int64_t convertToKey(const char* a, size_t alen) {
+    if (alen != sizeof(u_int64_t))
+        return 0;
+    return *((u_int64_t *)a);
+}
+
+
 static int CmpCompare(void* arg, const char* a, size_t alen, const char* b, size_t blen) {
-    //same length
-    if (alen == blen) {
-        return  memcmp(a, b, alen);
-    }
+    u_int64_t av =convertToKey(a, alen);
+    u_int64_t bv =convertToKey(b, alen);
 
-    // different length, so need to convert to int
-    alen = alen >= 1023 ? 1023:alen;
-    blen = blen >= 1023 ? 1023:blen;
-    char buffer[1024];
-    memcpy(buffer, a, alen);
-    buffer[alen] = '\0';
-    u_int64_t  av = strtoll(buffer, NULL, 10);
-
-    memcpy(buffer, b, blen);
-    buffer[blen] = '\0';
-    u_int64_t bv = strtoll(buffer, NULL, 10);
     if (av < bv) return -1;
     else if (av > bv) return +1;
     return 0;
@@ -121,19 +115,18 @@ int queue_push(struct Queue *q, struct QueueData *d) {
     if (NULL == q->writeItr)
         q->writeItr= leveldb_create_iterator(q->db,q->rop);
     leveldb_iter_seek_to_last(q->writeItr);
-    char key[1024];
-    size_t klen;
+    u_int64_t key;
     if (0 == leveldb_iter_valid(q->writeItr)) {
-        klen = snprintf(key, sizeof(key)-1 , "%d", 0);
+        key = 0;
     }
     else  {
         char * lkey= NULL;
+        size_t klen;
         lkey = (char *)leveldb_iter_key(q->writeItr, &klen);
-        size_t cl= strtol(lkey, NULL, 10);
-        klen = snprintf(key, sizeof(key)-1 , "%zd", cl+1);
+        key = 1+ convertToKey(lkey, klen);
     }
     char * errptr = NULL;
-    leveldb_put(q->db, q->wop,key, klen,d->v, d->vlen, &errptr);
+    leveldb_put(q->db, q->wop,(const char *)&key, sizeof(u_int64_t),d->v, d->vlen, &errptr);
     freeItrs(q);
     return LIBQUEUE_SUCCESS;
 }
@@ -154,16 +147,12 @@ int queue_pop(struct Queue *q, struct QueueData *d) {
         d->v = tmp;
     }
     size_t klen = 0;
-    char * key= NULL;
-    key = (char *)leveldb_iter_key(q->readItr, &klen);
-    klen = klen >= 1023 ? 1023:klen;
-    char buffer[1024];
-    memcpy(buffer, key, klen);
-    buffer[klen] = '\0';
-
+    char * lkey= NULL;
+    lkey = (char *)leveldb_iter_key(q->readItr, &klen);
+    u_int64_t key = convertToKey(lkey, klen);
     leveldb_iter_next(q->readItr);
     char * errptr=NULL;
-    leveldb_delete(q->db,  q->wop,buffer, klen, &errptr);
+    leveldb_delete(q->db,  q->wop,(const char *) &key, sizeof(u_int64_t), &errptr);
     freeItrs(q);
     return LIBQUEUE_SUCCESS;
 }
