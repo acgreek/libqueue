@@ -19,11 +19,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <queue.h>
+#include "queue.h"
 #include "queueutils.h"
 
 int main(int argc, char **argv) {
-  struct Queue q;
+  struct Queue * q;
   struct QueueData d;
   int64_t l = 0;
   int i = 0;
@@ -44,13 +44,13 @@ int main(int argc, char **argv) {
 
   i = optind-1;
 
-  if(queue_open( SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
+  if((q= queue_open( SELECTQUEUE(cq))) == NULL) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;
   }
-  if(queue_len(&q, &l) != LIBQUEUE_SUCCESS) {
+  if(queue_len(q, &l) != LIBQUEUE_SUCCESS) {
     puts("Failed to read the queue length.");
-    closequeue(&q);
+    closequeue(q);
     return EXIT_FAILURE;
   }
   while(argv[++i]) {
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
       printf("Index out of bounds: %lld (%lld)\n", (long long)j, (long long )l);
       continue;
     }
-    if(queue_peek(&q, j-1, &d) != LIBQUEUE_SUCCESS) {
+    if(queue_peek(q, j-1, &d) != LIBQUEUE_SUCCESS) {
       printf("Failed to peek at element #%lld\n",(long long) j);
       continue;
     }
@@ -68,5 +68,5 @@ int main(int argc, char **argv) {
   }
   if(cq != NULL)
     free(cq);
-  return closequeue(&q);
+  return closequeue(q);
 }

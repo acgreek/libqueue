@@ -19,12 +19,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <queue.h>
+#include "queue.h"
 
 #include "queueutils.h"
 
 int main(int argc, char **argv) {
-  struct Queue q;
+  struct Queue * q;
   struct QueueData d;
   int64_t l = 0;
   int opt = 0;
@@ -41,27 +41,27 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-  if(queue_open( SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
+  if((q= queue_open( SELECTQUEUE(cq))) == NULL) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;
   }
-  if(queue_len(&q, &l) != LIBQUEUE_SUCCESS) {
+  if(queue_len(q, &l) != LIBQUEUE_SUCCESS) {
     puts("Failed to retrieve the queue length.");
-    closequeue(&q);
+    closequeue(q);
     return EXIT_FAILURE;
   }
   if(l == 0) {
-    closequeue(&q);
+    closequeue(q);
     return EXIT_FAILURE;
   }
-  if(queue_pop(&q, &d) != LIBQUEUE_SUCCESS){
+  if(queue_pop(q, &d) != LIBQUEUE_SUCCESS){
     puts("Failed to retrieve the value from the queue.");
-    closequeue(&q);
+    closequeue(q);
     return EXIT_FAILURE;
   }
   printf("%s\n", (const char*)d.v);
   free(d.v);
   if(cq != NULL)
     free(cq);
-  return closequeue(&q);
+  return closequeue(q);
 }

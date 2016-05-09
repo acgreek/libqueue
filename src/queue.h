@@ -40,23 +40,7 @@ enum {
   LIBQUEUE_MEM_ERROR = -2
 };
 
-struct QueueStateFileStruct {
-    u_int64_t totalDiskUsage;
-    u_int64_t readableDiskUsage;
-    u_int64_t maxFileSize;
-    char writeFile[1024];
-    u_int64_t writeOffset;
-    char readFile[1024];
-    u_int64_t readOffset;
-};
-
-struct Queue {
-    char * path;
-    int stateFd;
-    int writeFd;
-    int readFd;
-    struct QueueStateFileStruct state;
-};
+struct Queue;
 
 struct QueueData {
   void *v;

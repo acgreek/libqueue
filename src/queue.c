@@ -20,109 +20,128 @@
 #include "queue.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/file.h>
+#include <leveldb/c.h>
+
 #include <fcntl.h>
 
-static int  updateStateOnDisk(struct Queue * q) {
-    lseek(q->stateFd, 0, SEEK_SET);
-    if (sizeof (struct QueueStateFileStruct) != write (q->stateFd,&q->state,sizeof (struct QueueStateFileStruct)  ))
-       return -1;
-    fdatasync(q->stateFd);
-    return 0;
-}
+struct Queue {
+    leveldb_t * db;
+    leveldb_iterator_t* readItr;
+    leveldb_iterator_t* writeItr;
+     leveldb_readoptions_t* rop;
+     leveldb_writeoptions_t* wop;
+};
 
 struct Queue * queue_open(const char *path) {
-    assert(path != NULL);
-    if (0 != access (path, R_OK| W_OK))
-        return NULL;
-    struct Queue * q = malloc (sizeof (struct Queue));
-    if (NULL == q)
-        return NULL;
-    memset (q, 0 , sizeof (struct Queue));
-    q->path = strdup (path);
-    char statefilepath[2048];
-    snprintf(statefilepath, sizeof(statefilepath),"%s/queue.state", q->path);
-    q->stateFd = open (statefilepath,O_CREAT| O_RDWR, S_IRUSR| S_IWUSR );
-    if (q->stateFd == -1) {
-        free(q);
-        return NULL;
+    char * errptr=NULL;
+    leveldb_options_t* options = leveldb_options_create();
+    leveldb_options_set_create_if_missing(options, 1);
+    leveldb_t * db = leveldb_open(options, path, &errptr);
+    if (db) {
+        struct Queue * q = malloc(sizeof (struct Queue));
+        memset(q, 0, sizeof(struct Queue));
+        q->db = db;
+        q->rop = leveldb_readoptions_create();
+        q->wop = leveldb_writeoptions_create();
+        return q;
     }
-    if (sizeof (struct QueueStateFileStruct) != read(q->stateFd, &q->state,sizeof (struct QueueStateFileStruct) ) ) {
-        memset (&q->state, 0 , sizeof (struct QueueStateFileStruct));
-        updateStateOnDisk(q);
-    }
-    if ('\0' != q->state.writeFile[0]) {
-        snprintf(statefilepath, sizeof(statefilepath),"%s/%s", q->path, q->state.writeFile);
-        q->writeFd = open (statefilepath,O_CREAT| O_RDWR, S_IRUSR| S_IWUSR );
-        lseek(q->writeFd,q->state.writeOffset , SEEK_CUR);
-    }
-    return q;
+    free(errptr);
+
+
+    return NULL;
 }
 
 int queue_close(struct Queue *q) {
-  assert(q != NULL);
-  if (q->stateFd)
-      close(q->stateFd);
-  if (q->writeFd)
-      close(q->writeFd);
-  if (q->path)
-      free(q->path);
-  free(q);
-  return LIBQUEUE_SUCCESS;
+    assert(q != NULL);
+    if (q->readItr)
+        leveldb_iter_destroy(q->readItr);
+    if (q->writeItr)
+        leveldb_iter_destroy(q->readItr);
+    q->writeItr= NULL;
+    q->readItr= NULL;
+    if (q->db)
+        leveldb_close(q->db);
+    q->db= NULL;
+    return LIBQUEUE_SUCCESS;
 }
 
 int queue_push(struct Queue *q, struct QueueData *d) {
     assert(q != NULL);
     assert(d != NULL);
     assert(d->v != NULL);
-    //  return LIBQUEUE_FAILURE;
-    if ('\0' == q->state.writeFile[0]) {
-        if (q->writeFd)
-            close(q->writeFd);
-        snprintf(q->state.writeFile, sizeof(q->state.writeFile)-1, "queue.%zu", time(NULL));
-        char statefilepath[2048];
-        snprintf(statefilepath, sizeof(statefilepath),"%s/%s", q->path, q->state.writeFile);
-        q->writeFd = open (statefilepath,O_CREAT| O_RDWR, S_IRUSR| S_IWUSR );
-        if (q->writeFd == 0)
-            return LIBQUEUE_FAILURE;
+    if (NULL == q->writeItr)
+        q->readItr= leveldb_create_iterator(q->db,q->rop);
+    else {
+        leveldb_iter_seek_to_last(q->readItr);
     }
+    char key[1024];
+    size_t klen;
+    if (0 == leveldb_iter_valid(q->readItr)) {
+        klen = snprintf(key, sizeof(key)-1 , "%d", 0);
+    }
+    else  {
+        char * lkey= NULL;
 
-    size_t cur = lseek(q->writeFd,0, SEEK_CUR);
-
-    if (sizeof(u_int64_t) != write (q->writeFd, &d->vlen, sizeof(u_int64_t))) {
-        lseek(q->writeFd, cur, SEEK_SET);
-        return LIBQUEUE_FAILURE;
+        lkey = (char *)leveldb_iter_key(q->readItr, &klen);
+        size_t cl= strtol(lkey, NULL, 10);
+        klen = snprintf(key, sizeof(key)-1 , "%zd", cl+1);
     }
-    if (d->vlen != write (q->writeFd, d->v, d->vlen)) {
-        lseek(q->writeFd, cur, SEEK_SET);
-        return LIBQUEUE_FAILURE;
-    }
-    fdatasync(q->writeFd);
-    cur = lseek(q->writeFd,0, SEEK_CUR);
-    q->state.writeOffset = cur;
-    updateStateOnDisk(q);
+    char * errptr = NULL;
+    leveldb_put(q->db, q->wop,key, klen,d->v, d->vlen, &errptr);
     return LIBQUEUE_SUCCESS;
 }
 
 int queue_pop(struct Queue *q, struct QueueData *d) {
-  assert(q != NULL);
-  assert(d != NULL);
-  return LIBQUEUE_SUCCESS;
+    assert(q != NULL);
+    assert(d != NULL);
+    if (NULL == q->readItr )
+        q->readItr= leveldb_create_iterator(q->db,q->rop);
+    else {
+        leveldb_iter_seek_to_first(q->readItr);
+    }
+    if (0 < leveldb_iter_valid(q->readItr)) {
+        return LIBQUEUE_FAILURE;
+    }
+    d->v = (char *)leveldb_iter_value(q->readItr, &d->vlen);
+    size_t klen = 0;
+    char * key= NULL;
+    key = (char *)leveldb_iter_key(q->readItr, &klen);
+    leveldb_iter_next(q->readItr);
+    char * errptr=NULL;
+    leveldb_delete(q->db,  q->wop,key, klen, &errptr);
+    return LIBQUEUE_SUCCESS;
 }
 
 int queue_len(struct Queue *q, int64_t *lenbuf) {
-  assert(lenbuf != NULL);
-  return LIBQUEUE_SUCCESS;
+    assert(lenbuf != NULL);
+    if (NULL == q->readItr )
+        q->readItr= leveldb_create_iterator(q->db,q->rop);
+    leveldb_iter_seek_to_first(q->readItr);
+    if (0 ==  leveldb_iter_valid(q->readItr)) {
+        return 0 ;
+    }
+    return  10;
 }
 
 int queue_peek(struct Queue *q, int64_t idx, struct QueueData *d) {
-  assert(q != NULL);
-  assert(d != NULL);
-  return LIBQUEUE_SUCCESS;
+    assert(q != NULL);
+    assert(d != NULL);
+    if (NULL == q->readItr )
+        q->readItr= leveldb_create_iterator(q->db,q->rop);
+    else {
+        leveldb_iter_seek_to_first(q->readItr);
+    }
+    if (0 < leveldb_iter_valid(q->readItr)) {
+        return LIBQUEUE_FAILURE;
+    }
+    d->v = (char *)leveldb_iter_value(q->readItr, &d->vlen);
+    return LIBQUEUE_SUCCESS;
 }
 
 int queue_poke(struct Queue *q, int64_t idx, struct QueueData *d) {
-  assert(q != NULL);
-  assert(d != NULL);
-  assert(d->v != NULL);
-  return LIBQUEUE_SUCCESS;
+    assert(q != NULL);
+    assert(d != NULL);
+    assert(d->v != NULL);
+    return LIBQUEUE_SUCCESS;
 }
