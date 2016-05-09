@@ -100,10 +100,15 @@ int queue_pop(struct Queue *q, struct QueueData *d) {
     else {
         leveldb_iter_seek_to_first(q->readItr);
     }
-    if (0 < leveldb_iter_valid(q->readItr)) {
+    if (0 == leveldb_iter_valid(q->readItr)) {
         return LIBQUEUE_FAILURE;
     }
     d->v = (char *)leveldb_iter_value(q->readItr, &d->vlen);
+    if (d->v) {
+        char * tmp = malloc (d->vlen);
+        memcpy(tmp, d->v, d->vlen);
+        d->v = tmp;
+    }
     size_t klen = 0;
     char * key= NULL;
     key = (char *)leveldb_iter_key(q->readItr, &klen);
@@ -115,13 +120,16 @@ int queue_pop(struct Queue *q, struct QueueData *d) {
 
 int queue_len(struct Queue *q, int64_t *lenbuf) {
     assert(lenbuf != NULL);
-    if (NULL == q->readItr )
+    if (NULL == q->readItr) {
         q->readItr= leveldb_create_iterator(q->db,q->rop);
-    leveldb_iter_seek_to_first(q->readItr);
-    if (0 ==  leveldb_iter_valid(q->readItr)) {
-        return 0 ;
     }
-    return  10;
+    leveldb_iter_seek_to_first(q->readItr);
+    if (0 == leveldb_iter_valid(q->readItr)) {
+        *lenbuf = 0;
+    }
+    // TODO, figure out fast way to get size
+    *lenbuf= 10;
+    return LIBQUEUE_SUCCESS;
 }
 
 int queue_peek(struct Queue *q, int64_t idx, struct QueueData *d) {
@@ -132,7 +140,7 @@ int queue_peek(struct Queue *q, int64_t idx, struct QueueData *d) {
     else {
         leveldb_iter_seek_to_first(q->readItr);
     }
-    if (0 < leveldb_iter_valid(q->readItr)) {
+    if (0 == leveldb_iter_valid(q->readItr)) {
         return LIBQUEUE_FAILURE;
     }
     d->v = (char *)leveldb_iter_value(q->readItr, &d->vlen);

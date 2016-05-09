@@ -53,19 +53,11 @@ int main(int argc, char **argv) {
     closequeue(q);
     return EXIT_FAILURE;
   }
-  while(argv[++i]) {
-    if((j = (int64_t)atoi((const char*)argv[i])) < 0
-        || (j+1)>l) {
-      printf("Index out of bounds: %lld (%lld)\n", (long long)j, (long long )l);
-      continue;
-    }
-    if(queue_peek(q, j-1, &d) != LIBQUEUE_SUCCESS) {
+  if(queue_peek(q, j-1, &d) != LIBQUEUE_SUCCESS) {
       printf("Failed to peek at element #%lld\n",(long long) j);
-      continue;
-    }
-    printf("@%lld: %s\n", (long long )j, (const char*)d.v);
-    free(d.v);
   }
+  else
+      printf("%s\n", (const char*)d.v);
   if(cq != NULL)
     free(cq);
   return closequeue(q);
