@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <leveldb/c.h>
+#include <limits.h>
 
 #include <fcntl.h>
 
@@ -148,10 +149,8 @@ int queue_pop(struct Queue *q, struct QueueData *d) {
         memcpy(tmp, d->v, d->vlen);
         d->v = tmp;
     }
-    size_t klen = 0;
-    char * lkey= NULL;
-    lkey = (char *)leveldb_iter_key(q->readItr, &klen);
-    u_int64_t key = convertToKey(lkey, klen);
+
+    u_int64_t key = getKeyFromIter(q->readItr);
     leveldb_iter_next(q->readItr);
     char * errptr=NULL;
     leveldb_delete(q->db,  q->wop,(const char *) &key, sizeof(u_int64_t), &errptr);
@@ -167,9 +166,18 @@ int queue_len(struct Queue *q, int64_t *lenbuf) {
     leveldb_iter_seek_to_first(q->readItr);
     if (0 == leveldb_iter_valid(q->readItr)) {
         *lenbuf = 0;
+        return LIBQUEUE_SUCCESS;
     }
+    size_t sizes[1]  = { 0 };
+    u_int64_t starti = 0;
+    u_int64_t limiti = ULLONG_MAX;
+
+    const char * start[1] = {(const char *)&starti };
+    size_t start_len[1] = { sizeof(u_int64_t)  };
+    const char * limit[1] = {(const char *)&limiti };
+     leveldb_approximate_sizes(q->db, 1, start,start_len, limit, start_len, sizes);
     // TODO, figure out fast way to get size
-    *lenbuf= 10;
+    *lenbuf= sizes[0];
     return LIBQUEUE_SUCCESS;
 }
 

@@ -18,11 +18,11 @@
  * */
 
 #include <stdlib.h>
-#include <queue.h>
+#include "queue.h"
 #include "queueutils.h"
 
 int main(int argc, char **argv) {
-  struct Queue q;
+  struct Queue *q;
   int64_t l = 0;
   int opt = 0;
   char *cq = NULL;
@@ -37,17 +37,17 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-  if(queue_open(SELECTQUEUE(cq)) != LIBQUEUE_SUCCESS) {
+  if(NULL == (q = queue_open(SELECTQUEUE(cq)))) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;
   }
-  if(queue_len(&q, &l) != LIBQUEUE_SUCCESS) {
+  if(queue_len(q, &l) != LIBQUEUE_SUCCESS) {
     puts("Failed to get the queue length.");
-    closequeue(&q);
+    closequeue(q);
     return EXIT_FAILURE;
   }
   printf("%lld\n", (long long)l);
   if(cq != NULL)
     free(cq);
-  return closequeue(&q);
+  return closequeue(q);
 }

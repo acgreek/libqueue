@@ -19,5 +19,8 @@ target_link_libraries(qpop queue ${LevelDB_LIBRARIES} )
 add_executable(qpeek qpeek.c queueutils.c) 
 target_link_libraries(qpeek queue ${LevelDB_LIBRARIES} )
 
+add_executable(qlen qlen.c queueutils.c) 
+target_link_libraries(qlen queue ${LevelDB_LIBRARIES} )
+
 add_executable(qtest qtest.c queueutils.c) 
 target_link_libraries(qtest queue ${LevelDB_LIBRARIES} )
