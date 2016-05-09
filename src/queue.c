@@ -29,13 +29,43 @@ struct Queue {
     leveldb_t * db;
     leveldb_iterator_t* readItr;
     leveldb_iterator_t* writeItr;
-     leveldb_readoptions_t* rop;
-     leveldb_writeoptions_t* wop;
+    leveldb_readoptions_t* rop;
+    leveldb_writeoptions_t* wop;
 };
+static void CmpDestroy(void* arg) {  }
+
+static int CmpCompare(void* arg, const char* a, size_t alen, const char* b, size_t blen) {
+    //same length
+    if (alen == blen) {
+        return  memcmp(a, b, alen);
+    }
+
+    // different length, so need to convert to int
+    alen = alen >= 1023 ? 1023:alen;
+    blen = blen >= 1023 ? 1023:blen;
+    char buffer[1024];
+    memcpy(buffer, a, alen);
+    buffer[alen] = '\0';
+    u_int64_t  av = strtoll(buffer, NULL, 10);
+
+    memcpy(buffer, b, blen);
+    buffer[blen] = '\0';
+    u_int64_t bv = strtoll(buffer, NULL, 10);
+    if (av < bv) return -1;
+    else if (av > bv) return +1;
+    return 0;
+}
+
+static const char* CmpName(void* arg) {
+       return "foo";
+
+}
 
 struct Queue * queue_open(const char *path) {
     char * errptr=NULL;
     leveldb_options_t* options = leveldb_options_create();
+    leveldb_comparator_t * cmp = leveldb_comparator_create(NULL, CmpDestroy, CmpCompare, CmpName);
+    leveldb_options_set_comparator(options, cmp);
     leveldb_options_set_create_if_missing(options, 1);
     leveldb_t * db = leveldb_open(options, path, &errptr);
     if (db) {
@@ -57,7 +87,7 @@ int queue_close(struct Queue *q) {
     if (q->readItr)
         leveldb_iter_destroy(q->readItr);
     if (q->writeItr)
-        leveldb_iter_destroy(q->readItr);
+        leveldb_iter_destroy(q->writeItr);
     q->writeItr= NULL;
     q->readItr= NULL;
     if (q->db)
@@ -71,19 +101,16 @@ int queue_push(struct Queue *q, struct QueueData *d) {
     assert(d != NULL);
     assert(d->v != NULL);
     if (NULL == q->writeItr)
-        q->readItr= leveldb_create_iterator(q->db,q->rop);
-    else {
-        leveldb_iter_seek_to_last(q->readItr);
-    }
+        q->writeItr= leveldb_create_iterator(q->db,q->rop);
+    leveldb_iter_seek_to_last(q->writeItr);
     char key[1024];
     size_t klen;
-    if (0 == leveldb_iter_valid(q->readItr)) {
+    if (0 == leveldb_iter_valid(q->writeItr)) {
         klen = snprintf(key, sizeof(key)-1 , "%d", 0);
     }
     else  {
         char * lkey= NULL;
-
-        lkey = (char *)leveldb_iter_key(q->readItr, &klen);
+        lkey = (char *)leveldb_iter_key(q->writeItr, &klen);
         size_t cl= strtol(lkey, NULL, 10);
         klen = snprintf(key, sizeof(key)-1 , "%zd", cl+1);
     }
@@ -112,9 +139,14 @@ int queue_pop(struct Queue *q, struct QueueData *d) {
     size_t klen = 0;
     char * key= NULL;
     key = (char *)leveldb_iter_key(q->readItr, &klen);
+    klen = klen >= 1023 ? 1023:klen;
+    char buffer[1024];
+    memcpy(buffer, key, klen);
+    buffer[klen] = '\0';
+
     leveldb_iter_next(q->readItr);
     char * errptr=NULL;
-    leveldb_delete(q->db,  q->wop,key, klen, &errptr);
+    leveldb_delete(q->db,  q->wop,buffer, klen, &errptr);
     return LIBQUEUE_SUCCESS;
 }
 
