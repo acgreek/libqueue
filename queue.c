@@ -31,6 +31,8 @@ struct Queue {
     leveldb_iterator_t* writeItr;
     leveldb_readoptions_t* rop;
     leveldb_writeoptions_t* wop;
+    leveldb_options_t* options;
+    leveldb_comparator_t * cmp;
 };
 static void CmpDestroy(void* arg) {  }
 
@@ -71,9 +73,12 @@ struct Queue * queue_open(const char *path) {
     if (db) {
         struct Queue * q = malloc(sizeof (struct Queue));
         memset(q, 0, sizeof(struct Queue));
+        q->options = options;
+        q->cmp = cmp;
         q->db = db;
         q->rop = leveldb_readoptions_create();
         q->wop = leveldb_writeoptions_create();
+        leveldb_writeoptions_set_sync(q->wop , 1);
         return q;
     }
     free(errptr);
@@ -81,18 +86,31 @@ struct Queue * queue_open(const char *path) {
 
     return NULL;
 }
-
-int queue_close(struct Queue *q) {
-    assert(q != NULL);
+static void freeItrs(struct Queue *q) {
     if (q->readItr)
         leveldb_iter_destroy(q->readItr);
     if (q->writeItr)
         leveldb_iter_destroy(q->writeItr);
     q->writeItr= NULL;
     q->readItr= NULL;
+
+}
+
+int queue_close(struct Queue *q) {
+    assert(q != NULL);
+    freeItrs(q);
+    leveldb_options_destroy(q->options);
+    leveldb_comparator_destroy(q->cmp);
+    leveldb_writeoptions_destroy(q->wop);
+    leveldb_readoptions_destroy(q->rop);
+    q->wop = NULL;
+    q->rop = NULL;
+    q->options = NULL;
+    q->cmp = NULL;
     if (q->db)
         leveldb_close(q->db);
     q->db= NULL;
+    free(q);
     return LIBQUEUE_SUCCESS;
 }
 
@@ -116,6 +134,7 @@ int queue_push(struct Queue *q, struct QueueData *d) {
     }
     char * errptr = NULL;
     leveldb_put(q->db, q->wop,key, klen,d->v, d->vlen, &errptr);
+    freeItrs(q);
     return LIBQUEUE_SUCCESS;
 }
 
@@ -124,9 +143,7 @@ int queue_pop(struct Queue *q, struct QueueData *d) {
     assert(d != NULL);
     if (NULL == q->readItr )
         q->readItr= leveldb_create_iterator(q->db,q->rop);
-    else {
-        leveldb_iter_seek_to_first(q->readItr);
-    }
+    leveldb_iter_seek_to_first(q->readItr);
     if (0 == leveldb_iter_valid(q->readItr)) {
         return LIBQUEUE_FAILURE;
     }
@@ -147,6 +164,7 @@ int queue_pop(struct Queue *q, struct QueueData *d) {
     leveldb_iter_next(q->readItr);
     char * errptr=NULL;
     leveldb_delete(q->db,  q->wop,buffer, klen, &errptr);
+    freeItrs(q);
     return LIBQUEUE_SUCCESS;
 }
 
