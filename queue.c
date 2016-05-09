@@ -107,6 +107,12 @@ int queue_close(struct Queue *q) {
     free(q);
     return LIBQUEUE_SUCCESS;
 }
+static u_int64_t getKeyFromIter(leveldb_iterator_t * itr) {
+        char * lkey= NULL;
+        size_t klen;
+        lkey = (char *)leveldb_iter_key(itr, &klen);
+        return convertToKey(lkey, klen);
+}
 
 int queue_push(struct Queue *q, struct QueueData *d) {
     assert(q != NULL);
@@ -118,12 +124,8 @@ int queue_push(struct Queue *q, struct QueueData *d) {
     u_int64_t key;
     if (0 == leveldb_iter_valid(q->writeItr)) {
         key = 0;
-    }
-    else  {
-        char * lkey= NULL;
-        size_t klen;
-        lkey = (char *)leveldb_iter_key(q->writeItr, &klen);
-        key = 1+ convertToKey(lkey, klen);
+    } else  {
+        key = 1+ getKeyFromIter(q->writeItr);
     }
     char * errptr = NULL;
     leveldb_put(q->db, q->wop,(const char *)&key, sizeof(u_int64_t),d->v, d->vlen, &errptr);
