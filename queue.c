@@ -197,9 +197,3 @@ int queue_peek(struct Queue *q, int64_t idx, struct QueueData *d) {
     return LIBQUEUE_SUCCESS;
 }
 
-int queue_poke(struct Queue *q, int64_t idx, struct QueueData *d) {
-    assert(q != NULL);
-    assert(d != NULL);
-    assert(d->v != NULL);
-    return LIBQUEUE_SUCCESS;
-}

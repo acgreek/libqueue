@@ -26,7 +26,6 @@ int main(int argc, char **argv) {
   struct Queue * q;
   struct QueueData d;
   int64_t l = 0;
-  int i = 0;
   int64_t j = 0;
   char *cq = NULL;
   int opt = 0;
@@ -42,7 +41,6 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-  i = optind-1;
 
   if((q= queue_open( SELECTQUEUE(cq))) == NULL) {
     puts("Failed to open the queue.");
