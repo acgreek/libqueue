@@ -64,8 +64,8 @@ int queue_push(struct Queue *q, struct QueueData *d);
 int queue_pop(struct Queue *q, struct QueueData *d);
 
 /*
-  return > 0 if there is at least one element ready for reading in queue, 
-  other wise returns 0
+  returns approximate leveldb size if there is at least one element ready 
+  for reading in queue, other wise returns 0
 
 */
 int queue_len(struct Queue *q, int64_t *len);
@@ -140,7 +140,8 @@ prints the string to stdout and exists with the status code 0.
 qlen
 ----
 
-Prints the length of the queueutils' queue.
+if there are no elements, then 0 is returned, otherwise approximate length 
+from leveldb is provided
 
 qpeek
 -----
