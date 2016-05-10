@@ -94,7 +94,7 @@ Dependencies:
 
 * libleveldb  (on ubuntu, apt get install libleveldb-dev)
 
-libqueue uses the GNU cmake for building:
+libqueue uses the cmake for building:
 
 cmake .
 make 
