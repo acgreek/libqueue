@@ -49,6 +49,46 @@ struct QueueData {
 */
 struct Queue *  queue_open(const char *path);
 
+
+/*
+  Same as queue_open but allow one to provde options for various settings internal 
+  to leveldb. The vararg must be terminated by a NULL to indicate end of options
+
+  options are to be provided as strings with some requiring args
+
+  available options:
+  "failIfMissing" 
+
+  if the database doesn't already exist, the database will not be created and error 
+  status is returned
+
+  "paranoidChecks"
+
+  various paranoid checks will be done with every operation 
+
+  "writeBufferSize"
+
+  must be followed by size_t value. this is the write buffer size of leveldb
+
+  "blockSize" 
+
+  must be followed by size_t value. this is the block size of leveldb
+
+  "blockRestartInterval" 
+
+  must be followed by size_t value. this is the block restart interval of leveldb
+
+  "maxOpenFiles" 
+
+  must be followed by int value. max open file handles used by leveldb
+
+  "noCompess" 
+
+  disables compression
+ */
+struct Queue *  queue_open_with_options(const char *path,..., NULL);
+
+
 /*
   Push a data object onto the queue. struct QueueData must be filled
   appropriately: d->v is a void* pointer to the data, d->vlen holds the
