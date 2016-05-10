@@ -70,6 +70,11 @@ int main(int argc, char **argv) {
 	if (EXIT_SUCCESS != resultsOfDelete) {
 		puts("there was an error running delete of temp dir command ");
 		return 1;
-        }
+    }
+	q=queue_open_with_options(template,"failIfMissing", NULL);
+	if (NULL == queue_get_last_error(q)) {
+		puts("queue was created when it shouldn't have been");
+
+	}
 	return 0;
 }

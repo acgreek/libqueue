@@ -34,6 +34,7 @@ struct Queue {
 	leveldb_writeoptions_t* wop;
 	leveldb_options_t* options;
 	leveldb_comparator_t * cmp;
+	char * error_strp;
 };
 static void CmpDestroy(void* arg) {  }
 
@@ -52,18 +53,22 @@ static int CmpCompare(void* arg, const char* a, size_t alen, const char* b, size
 	return 0;
 }
 
+const char * queue_get_last_error(struct Queue *q) {
+	return q->error_strp;
+}
+
 static const char* CmpName(void* arg) {
 	return "foo";
 
 }
 struct Queue * queue_open_with_options(const char *path,... ) {
-	char * errptr=NULL;
 	leveldb_options_t* options = leveldb_options_create();
 	leveldb_comparator_t * cmp = leveldb_comparator_create(NULL, CmpDestroy, CmpCompare, CmpName);
 	leveldb_options_set_comparator(options, cmp);
 	leveldb_options_set_create_if_missing(options, 1);
 
 	va_list argp;
+	int syncWrite = 0;
 
 	va_start(argp, path);
 	const char * p;
@@ -93,23 +98,24 @@ struct Queue * queue_open_with_options(const char *path,... ) {
 		if (0 == strcmp(p,"noCompress")) {
 			leveldb_options_set_compression(options,0);
 		}
+		if (0 == strcmp(p,"syncWrte")) {
+			syncWrite = 1;
+		}
 	}
 	va_end(argp);
 
-	leveldb_t * db = leveldb_open(options, path, &errptr);
+	struct Queue * q = malloc(sizeof (struct Queue));
+	memset(q, 0, sizeof(struct Queue));
+	leveldb_t * db = leveldb_open(options, path, &q->error_strp);
+	q->options = options;
+	q->cmp = cmp;
+	q->db = db;
 	if (db) {
-		struct Queue * q = malloc(sizeof (struct Queue));
-		memset(q, 0, sizeof(struct Queue));
-		q->options = options;
-		q->cmp = cmp;
-		q->db = db;
 		q->rop = leveldb_readoptions_create();
 		q->wop = leveldb_writeoptions_create();
-		leveldb_writeoptions_set_sync(q->wop , 1);
-		return q;
+		leveldb_writeoptions_set_sync(q->wop , syncWrite);
 	}
-	free(errptr);
-	return NULL;
+	return q;
 }
 
 struct Queue * queue_open(const char *path) {
@@ -139,6 +145,9 @@ int queue_close(struct Queue *q) {
 	if (q->db)
 		leveldb_close(q->db);
 	q->db= NULL;
+	if (q->error_strp)
+		free(q->error_strp);
+	q->error_strp =NULL;
 	free(q);
 	return LIBQUEUE_SUCCESS;
 }
@@ -162,8 +171,11 @@ int queue_push(struct Queue *q, struct QueueData *d) {
 	} else  {
 		key = 1+ getKeyFromIter(q->writeItr);
 	}
-	char * errptr = NULL;
-	leveldb_put(q->db, q->wop,(const char *)&key, sizeof(u_int64_t),d->v, d->vlen, &errptr);
+	if (q->error_strp) {
+		free(q->error_strp);
+		q->error_strp =NULL;
+	}
+	leveldb_put(q->db, q->wop,(const char *)&key, sizeof(u_int64_t),d->v, d->vlen, &q->error_strp);
 	freeItrs(q);
 	return LIBQUEUE_SUCCESS;
 }
@@ -186,8 +198,11 @@ int queue_pop(struct Queue *q, struct QueueData *d) {
 
 	u_int64_t key = getKeyFromIter(q->readItr);
 	leveldb_iter_next(q->readItr);
-	char * errptr=NULL;
-	leveldb_delete(q->db,  q->wop,(const char *) &key, sizeof(u_int64_t), &errptr);
+	if (q->error_strp) {
+		free(q->error_strp);
+		q->error_strp =NULL;
+	}
+	leveldb_delete(q->db,  q->wop,(const char *) &key, sizeof(u_int64_t), &q->error_strp);
 	freeItrs(q);
 	return LIBQUEUE_SUCCESS;
 }
