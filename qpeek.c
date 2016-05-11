@@ -41,7 +41,6 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-
   if((q= queue_open( SELECTQUEUE(cq))) == NULL) {
     puts("Failed to open the queue.");
     return EXIT_FAILURE;

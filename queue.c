@@ -224,6 +224,12 @@ int queue_peek(struct Queue * const q, int64_t idx, struct QueueData * const d) 
 	else {
 		leveldb_iter_seek_to_first(q->readItr);
 	}
+	while (idx)  {
+		if (0 == leveldb_iter_valid(q->readItr)) {
+			return LIBQUEUE_FAILURE;
+		}
+		leveldb_iter_next(q->readItr);
+	}
 	if (0 == leveldb_iter_valid(q->readItr)) {
 		return LIBQUEUE_FAILURE;
 	}
