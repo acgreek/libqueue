@@ -128,11 +128,11 @@ static void freeItrs(struct Queue * const q) {
 int queue_close(struct Queue *q) {
 	assert(q != NULL);
 	freeItrs(q);
+	IFFNF(q->db, leveldb_close);
 	IFFNF(q->options,leveldb_options_destroy);
 	IFFNF(q->cmp,leveldb_comparator_destroy);
 	IFFNF(q->wop,leveldb_writeoptions_destroy);
 	IFFNF(q->rop, leveldb_readoptions_destroy);
-	IFFNF(q->db, leveldb_close);
 	IFFN(q->error_strp);
 	IFFN(q);
 	return LIBQUEUE_SUCCESS;
@@ -229,6 +229,7 @@ int queue_peek(struct Queue * const q, int64_t idx, struct QueueData * const d) 
 			return LIBQUEUE_FAILURE;
 		}
 		leveldb_iter_next(q->readItr);
+		idx--;
 	}
 	if (0 == leveldb_iter_valid(q->readItr)) {
 		return LIBQUEUE_FAILURE;
