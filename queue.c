@@ -23,8 +23,10 @@
 #include <sys/file.h>
 #include <leveldb/c.h>
 #include <limits.h>
-
 #include <fcntl.h>
+
+#define IFFN(X) {if (NULL != X) {free(X); X =NULL;}}
+#define IFFNF(X,FUNC) {if (NULL != X) {FUNC(X); X =NULL;}}
 
 struct Queue {
 	leveldb_t * db;
@@ -46,8 +48,8 @@ static u_int64_t convertToKey(const char* a, size_t alen) {
 
 
 static int CmpCompare(void* arg, const char* a, size_t alen, const char* b, size_t blen) {
-	u_int64_t av =convertToKey(a, alen);
-	u_int64_t bv =convertToKey(b, alen);
+	u_int64_t av = convertToKey(a, alen);
+	u_int64_t bv = convertToKey(b, alen);
 	if (av < bv) return -1;
 	else if (av > bv) return +1;
 	return 0;
@@ -66,10 +68,8 @@ struct Queue * queue_open_with_options(const char *path,... ) {
 	leveldb_comparator_t * cmp = leveldb_comparator_create(NULL, CmpDestroy, CmpCompare, CmpName);
 	leveldb_options_set_comparator(options, cmp);
 	leveldb_options_set_create_if_missing(options, 1);
-
 	va_list argp;
 	int syncWrite = 0;
-
 	va_start(argp, path);
 	const char * p;
 	for (p = va_arg(argp, char *); p != NULL; p = va_arg(argp,char *)) {
@@ -103,7 +103,6 @@ struct Queue * queue_open_with_options(const char *path,... ) {
 		}
 	}
 	va_end(argp);
-
 	struct Queue * q = malloc(sizeof (struct Queue));
 	memset(q, 0, sizeof(struct Queue));
 	leveldb_t * db = leveldb_open(options, path, &q->error_strp);
@@ -122,33 +121,20 @@ struct Queue * queue_open(const char *path) {
 	return queue_open_with_options(path,NULL);
 }
 static void freeItrs(struct Queue *q) {
-	if (q->readItr)
-		leveldb_iter_destroy(q->readItr);
-	if (q->writeItr)
-		leveldb_iter_destroy(q->writeItr);
-	q->writeItr= NULL;
-	q->readItr= NULL;
-
+	IFFNF(q->readItr, leveldb_iter_destroy);
+	IFFNF(q->writeItr, leveldb_iter_destroy);
 }
 
 int queue_close(struct Queue *q) {
 	assert(q != NULL);
 	freeItrs(q);
-	leveldb_options_destroy(q->options);
-	leveldb_comparator_destroy(q->cmp);
-	leveldb_writeoptions_destroy(q->wop);
-	leveldb_readoptions_destroy(q->rop);
-	q->wop = NULL;
-	q->rop = NULL;
-	q->options = NULL;
-	q->cmp = NULL;
-	if (q->db)
-		leveldb_close(q->db);
-	q->db= NULL;
-	if (q->error_strp)
-		free(q->error_strp);
-	q->error_strp =NULL;
-	free(q);
+	IFFNF(q->options,leveldb_options_destroy);
+	IFFNF(q->cmp,leveldb_comparator_destroy);
+	IFFNF(q->wop,leveldb_writeoptions_destroy);
+	IFFNF(q->rop, leveldb_readoptions_destroy);
+	IFFNF(q->db, leveldb_close);
+	IFFN(q->error_strp);
+	IFFN(q);
 	return LIBQUEUE_SUCCESS;
 }
 static u_int64_t getKeyFromIter(leveldb_iterator_t * itr) {
