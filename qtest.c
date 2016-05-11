@@ -76,5 +76,6 @@ int main(int argc, char **argv) {
 		puts("queue was created when it shouldn't have been");
 
 	}
+    queue_close(q);
 	return 0;
 }
