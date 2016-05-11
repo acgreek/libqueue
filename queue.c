@@ -237,4 +237,27 @@ int queue_peek(struct Queue * const q, int64_t idx, struct QueueData * const d) 
 	d->v = (char *)leveldb_iter_value(q->readItr, &d->vlen);
 	return LIBQUEUE_SUCCESS;
 }
+int queue_poke(struct Queue *q, int64_t idx, struct QueueData *d){
+	assert(q != NULL);
+	assert(d != NULL);
+	assert(d->v != NULL);
+	if (NULL == q->readItr )
+		q->readItr= leveldb_create_iterator(q->db,q->rop);
+	else {
+		leveldb_iter_seek_to_first(q->readItr);
+	}
+	while (idx)  {
+		if (0 == leveldb_iter_valid(q->readItr)) {
+			return LIBQUEUE_FAILURE;
+		}
+		leveldb_iter_next(q->readItr);
+		idx--;
+	}
+	if (0 == leveldb_iter_valid(q->readItr)) {
+		return LIBQUEUE_FAILURE;
+	}
+	int key = getKeyFromIter(q->readItr);
+	leveldb_put(q->db, q->wop,(const char *)&key, sizeof(u_int64_t),d->v, d->vlen, &q->error_strp);
+	return LIBQUEUE_SUCCESS;
+}
 

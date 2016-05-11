@@ -53,6 +53,7 @@ int queue_push(struct Queue *q, struct QueueData *d);
 int queue_pop(struct Queue *q, struct QueueData *d);
 int queue_len(struct Queue *q, int64_t *len);
 int queue_peek(struct Queue *q, int64_t s, struct QueueData *d);
+int queue_poke(struct Queue *q, int64_t s, struct QueueData *d);
 int queue_close(struct Queue *q);
 int queue_opened(struct Queue *q);
 const char * queue_get_last_error(const struct Queue const *q);

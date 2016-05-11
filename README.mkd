@@ -117,6 +117,14 @@ int queue_len(struct Queue *q, int64_t *len);
 int queue_peek(struct Queue *q, int64_t s, struct QueueData *d);
 
 /*
+   Like queue_push(), but over-writes the data at queue position s. This
+   function cannot be used to append new data to the queue. Indexing
+   starts from zero. s must be positive.
+ */
+int queue_poke(struct Queue *q, int64_t s, struct QueueData *d);
+
+
+/*
   Closes the queue. Only AFTER this function has been called one can be
   sure that the data has been properly stored. Undefined behaviour may
   occur if the concluding call to this function is omitted.
@@ -188,9 +196,23 @@ qpeek
 
 Peek at elements in the queueutils' queue.
 ```sh
-qpeek 
+qpeek <INDEX> [<index1>[..<indexN>]]</indexN>]]
 ```
-returns the oldest element in the queue
+Tries to peek at all indizes listed as arguments. Skips over invalid indizes but fails if the queue cannot be accessed properly.
+
+qpoke
+-----
+
+Replace an existing in the queue with another one.
+
+qpoke <INDEX> <NEW VALUE>
+Fails if we cannot poke the element at the specified index, or if the index is out of bounds.
+
+</NEW></INDEX>
+
+qtest
+-----
+executes some basic tests
 
 License
 =======
