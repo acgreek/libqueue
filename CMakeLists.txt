@@ -27,3 +27,6 @@ target_link_libraries(qlen queue ${LevelDB_LIBRARIES} )
 
 add_executable(qtest qtest.c queueutils.c) 
 target_link_libraries(qtest queue ${LevelDB_LIBRARIES} )
+
+install(TARGETS queue DESTINATION "lib")
+install(FILES queue.h DESTINATION "include")
