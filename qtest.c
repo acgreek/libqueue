@@ -17,11 +17,13 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+    q = queue_open(template);
+    if(0 == queue_is_opened(q)) {
+        fprintf(stderr,"Failed to open the queue:%s", queue_get_last_error(q));
+        queue_close(q);
+        return EXIT_FAILURE;
+    }
 
-	if(NULL == (q=queue_open(template))) {
-		puts("there was an error opening the queue!");
-		return 1;
-	}
 	puts("queue successfully opened!");
 
 	if(queue_push(q, &qd) != 0)

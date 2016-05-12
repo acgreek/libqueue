@@ -41,8 +41,10 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
         }
     int i = optind-1;
-    if((q= queue_open( SELECTQUEUE(cq))) == NULL) {
-        puts("Failed to open the queue.");
+    q = queue_open(SELECTQUEUE(cq));
+    if(0 == queue_is_opened(q)) {
+        fprintf(stderr,"Failed to open the queue:%s", queue_get_last_error(q));
+        closequeue(q);
         return EXIT_FAILURE;
     }
     if(queue_len(q, &l) != LIBQUEUE_SUCCESS) {
