@@ -8,6 +8,7 @@ set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -Wall -ggdb3")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 find_package(LevelDB REQUIRED)
+include_directories(${LevelDB_INCLUDE} )
 add_library(queue queue.c)
 
 add_executable(qpush qpush.c ) 
