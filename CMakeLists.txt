@@ -16,6 +16,14 @@ add_library(queue SHARED queue.c)
 add_library(queueStatic STATIC queue.c)
 set_target_properties(queueStatic PROPERTIES OUTPUT_NAME queue)
 
+set(MYLIB_VERSION_MAJOR 1)
+set(MYLIB_VERSION_MINOR 0)
+set(MYLIB_VERSION_PATCH 0)
+
+set(MYLIB_VERSION_STRING ${MYLIB_VERSION_MAJOR}.${MYLIB_VERSION_MINOR}.${MYLIB_VERSION_PATCH})
+
+set_target_properties(queue PROPERTIES VERSION ${MYLIB_VERSION_STRING} SOVERSION ${MYLIB_VERSION_MAJOR})
+
 
 add_executable(qpush qpush.c ) 
 target_link_libraries(qpush queue ${LevelDB_LIBRARIES} )
