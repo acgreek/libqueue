@@ -29,6 +29,7 @@
 #include <libgen.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #define QUEUE_DATADIR ("libqueue")

@@ -1,9 +1,10 @@
 cmake_minimum_required (VERSION 2.6)
 project (libqueue)
 
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -ggdb3")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
-set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -Wall -ggdb3")
+set(CMAKE_COMPILE_COMMON_FLAGS "-D_GNU_SOURCE -std=c99 -Wall ")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_COMPILE_COMMON_FLAGS} -ggdb3")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_COMPILE_COMMON_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_COMPILE_COMMON_FLAGS}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
@@ -12,6 +13,8 @@ find_package(LevelDB REQUIRED)
 include_directories(${LevelDB_INCLUDE} )
 
 add_library(queue SHARED queue.c)
+add_library(queueStatic STATIC queue.c)
+set_target_properties(queueStatic PROPERTIES OUTPUT_NAME queue)
 
 
 add_executable(qpush qpush.c ) 
