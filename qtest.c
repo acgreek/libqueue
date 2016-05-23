@@ -52,6 +52,12 @@ int main(int argc, char **argv) {
 		qd2.vlen= sprintf(buffer,"%d",i);
 		queue_push(q, &qd2);
 	}
+    int64_t count;
+    if (0 != queue_count(q, &count)) {
+    }
+    if (15 != count) {
+		fprintf(stderr, "ERROR: there should be 15 in the queue but got back %lld\n", (long long unsigned)count);
+    }
 	for (i = 0; i < 15; i++) {
 		queue_pop(q, &qd2);
 		int len = sprintf(buffer,"%d",i);

@@ -40,6 +40,9 @@ target_link_libraries(qpoke queue ${LevelDB_LIBRARIES} )
 add_executable(qlen qlen.c queueutils.c) 
 target_link_libraries(qlen queue ${LevelDB_LIBRARIES} )
 
+add_executable(qcount qcount.c queueutils.c) 
+target_link_libraries(qcount queue ${LevelDB_LIBRARIES} )
+
 add_executable(qtest qtest.c queueutils.c) 
 target_link_libraries(qtest queue ${LevelDB_LIBRARIES} )
 

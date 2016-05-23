@@ -193,7 +193,27 @@ int queue_pop(struct Queue * const q, struct QueueData * const d) {
 	return LIBQUEUE_SUCCESS;
 }
 
+int queue_count(struct Queue * const q, int64_t * const countp) {
+	assert(q != NULL);
+	assert(count != NULL);
+	if (NULL == q->readItr) {
+		q->readItr= leveldb_create_iterator(q->db,q->rop);
+	}
+	leveldb_iter_seek_to_last(q->readItr);
+	if (0 == leveldb_iter_valid(q->readItr)) {
+		*countp = 0;
+		return LIBQUEUE_SUCCESS;
+	}
+	u_int64_t lastQIndex = getKeyFromIter(q->readItr);
+	leveldb_iter_seek_to_first(q->readItr);
+	u_int64_t firstQIndex = getKeyFromIter(q->readItr);
+	*countp = lastQIndex -firstQIndex +1; //add 1 because zero indexed;
+	return LIBQUEUE_SUCCESS;
+
+}
+
 int queue_len(struct Queue * const q, int64_t * const lenbuf) {
+	assert(q != NULL);
 	assert(lenbuf != NULL);
 	if (NULL == q->readItr) {
 		q->readItr= leveldb_create_iterator(q->db,q->rop);

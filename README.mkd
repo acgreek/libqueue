@@ -111,6 +111,11 @@ int queue_pop(struct Queue *q, struct QueueData *d);
 int queue_len(struct Queue *q, int64_t *len);
 
 /*
+  returns numbers of elements in the queue
+*/
+int queue_count(struct Queue *q, int64_t *countp);
+
+/*
   Like queue_pop(), but doesn't remove the data object from the queue
   and returns the data at queue position s. Indexing is not used 
 */
@@ -190,6 +195,12 @@ qlen
 
 if there are no elements, then 0 is returned, otherwise approximate length 
 from leveldb is provided
+
+qcount
+----
+
+number of elments in the queue
+
 
 qpeek
 -----
