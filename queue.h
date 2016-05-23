@@ -31,6 +31,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define QUEUE_DATADIR ("libqueue")
 #define QUEUE_TUNINGSUFFIX "#type=kct#zcomp=gz#opts=c"
 
@@ -57,5 +62,8 @@ int queue_poke(struct Queue *q, int64_t s, struct QueueData *d);
 int queue_close(struct Queue *q);
 int queue_opened(struct Queue *q);
 const char * queue_get_last_error(const struct Queue const *q);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* QUEUE_H */
