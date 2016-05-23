@@ -18,6 +18,8 @@
  * */
 
 #include <stdlib.h>
+#include <getopt.h>
+#include <string.h>
 #include "queue.h"
 #include "queueutils.h"
 
