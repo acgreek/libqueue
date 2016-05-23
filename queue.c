@@ -211,6 +211,18 @@ int queue_count(struct Queue * const q, int64_t * const countp) {
 	return LIBQUEUE_SUCCESS;
 
 }
+int queue_compact(struct Queue *q) {
+	assert(q != NULL);
+	u_int64_t starti = 0;
+	u_int64_t limiti = ULLONG_MAX;
+
+	const char * start = (const char *)&starti;
+	const char * limit = (const char *) & limiti;
+	leveldb_compact_range(q->db, start,sizeof (starti), limit, sizeof(limiti));
+	// TODO, figure out fast way to get size
+	return LIBQUEUE_SUCCESS;
+
+}
 
 int queue_len(struct Queue * const q, int64_t * const lenbuf) {
 	assert(q != NULL);
