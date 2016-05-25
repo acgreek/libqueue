@@ -186,20 +186,20 @@ int queue_push(struct Queue * const q, struct QueueData * const d) {
 
 int queue_pop(struct Queue * const q, struct QueueData * const d) {
 	assert(q != NULL);
-	assert(d != NULL);
 	if (NULL == q->readItr )
 		q->readItr= leveldb_create_iterator(q->db,q->rop);
 	leveldb_iter_seek_to_first(q->readItr);
 	if (0 == leveldb_iter_valid(q->readItr)) {
 		return LIBQUEUE_FAILURE;
 	}
-	d->v = (char *)leveldb_iter_value(q->readItr, &d->vlen);
-	if (d->v) {
-		char * tmp = malloc (d->vlen);
-		memcpy(tmp, d->v, d->vlen);
-		d->v = tmp;
+	if (d) {
+		d->v = (char *)leveldb_iter_value(q->readItr, &d->vlen);
+		if (d->v) {
+			char * tmp = malloc (d->vlen);
+			memcpy(tmp, d->v, d->vlen);
+			d->v = tmp;
+		}
 	}
-
 	u_int64_t key = getKeyFromIter(q->readItr);
 	leveldb_iter_next(q->readItr);
 	if (q->error_strp) {
