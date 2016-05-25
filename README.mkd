@@ -209,6 +209,9 @@ qcompact
 ----
 compact the queue on the file system to use less diskspace
 
+qrepair 
+----
+repair a broken leveldb
 
 qpeek
 -----

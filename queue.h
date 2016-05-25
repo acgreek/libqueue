@@ -52,8 +52,10 @@ struct QueueData {
   void *v;
   u_int64_t vlen ;
 };
-struct Queue * queue_open_with_options(const char *path,... );
+struct Queue * queue_open_with_options(const char *path,...);
 struct Queue * queue_open(const char * path);
+void  queue_repair_with_options(const char * path,...);
+void  queue_repair(const char * path);
 int queue_is_opened (const struct Queue * const q);
 int queue_push(struct Queue *q, struct QueueData *d);
 int queue_pop(struct Queue *q, struct QueueData *d);

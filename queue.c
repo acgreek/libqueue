@@ -68,7 +68,7 @@ int queue_is_opened (const struct Queue * const q) {
 	return NULL != q->db;
 }
 
-struct Queue * queue_open_with_options(const char * const path,... ) {
+static struct Queue * readoptions (va_list argp) {
 	struct Queue * q = malloc(sizeof (struct Queue));
 	memset(q, 0, sizeof(struct Queue));
 
@@ -79,8 +79,6 @@ struct Queue * queue_open_with_options(const char * const path,... ) {
 
 	q->rop = leveldb_readoptions_create();
 	q->wop = leveldb_writeoptions_create();
-	va_list argp;
-	va_start(argp, path);
 	const char * p;
 	for (p = va_arg(argp, char *); p != NULL; p = va_arg(argp,char *)) {
 		if (0 == strcmp(p, "failIfMissing")) {
@@ -112,13 +110,33 @@ struct Queue * queue_open_with_options(const char * const path,... ) {
 			leveldb_writeoptions_set_sync(q->wop , 1);
 		}
 	}
+	return q;
+}
+
+struct Queue * queue_open_with_options(const char * const path,... ) {
+	va_list argp;
+	va_start(argp, path);
+	struct Queue * q = readoptions(argp);
 	va_end(argp);
+
 	q->db = leveldb_open(q->options, path, &q->error_strp);
 	return q;
 }
 
 struct Queue * queue_open(const char * const path) {
 	return queue_open_with_options(path,NULL);
+}
+void queue_repair_with_options(const char * const path,... ) {
+	va_list argp;
+	va_start(argp, path);
+	struct Queue * q = readoptions(argp);
+	va_end(argp);
+
+	leveldb_repair_db(q->options, path, &q->error_strp);
+
+}
+void queue_repair(const char * path) {
+	return queue_repair_with_options(path,NULL);
 }
 static void freeItrs(struct Queue * const q) {
 	IFFNF(q->readItr, leveldb_iter_destroy);

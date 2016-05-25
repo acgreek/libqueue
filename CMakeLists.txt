@@ -46,6 +46,9 @@ target_link_libraries(qcount queue ${LevelDB_LIBRARIES} )
 #add_executable(qcompact qcompact.c queueutils.c) 
 #target_link_libraries(qcompact queue ${LevelDB_LIBRARIES} )
 
+add_executable(qrepair qrepair.c queueutils.c) 
+target_link_libraries(qrepair queue ${LevelDB_LIBRARIES} )
+
 add_executable(qtest qtest.c queueutils.c) 
 target_link_libraries(qtest queue ${LevelDB_LIBRARIES} )
 
