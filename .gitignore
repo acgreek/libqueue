@@ -8,6 +8,7 @@ libqueue.so*
 qlen
 qcount
 qcompact
+qrepair
 qpeek
 qpoke
 qpop
