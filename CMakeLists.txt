@@ -54,3 +54,6 @@ target_link_libraries(qtest queue ${LevelDB_LIBRARIES} )
 
 install(TARGETS queue DESTINATION "lib")
 install(FILES queue.h DESTINATION "include")
+
+add_custom_target(test qtest qtest)
+
